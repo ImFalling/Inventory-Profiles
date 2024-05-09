@@ -55,7 +55,7 @@ plugins {
     id("com.github.johnrengelman.shadow") version "8.1.1" apply false
 
     id("io.github.gradle-nexus.publish-plugin") version "1.1.0" apply true
-    id("fabric-loom") version(org.anti_ad.mc.ipnext.buildsrc.loom_version) apply false
+    id("fabric-loom") version "1.6.5" apply false
     id("com.matthewprenger.cursegradle") version "1.4.+" apply false
     id("com.modrinth.minotaur") version "2.+" apply false
 }

@@ -23,6 +23,7 @@ import com.matthewprenger.cursegradle.CurseExtension
 import com.matthewprenger.cursegradle.CurseProject
 import com.modrinth.minotaur.dependencies.ModDependency
 import net.fabricmc.loom.task.RemapJarTask
+import org.anti_ad.mc.ipnext.buildsrc.Loaders.*
 import org.anti_ad.mc.ipnext.buildsrc.configureCommon
 import org.anti_ad.mc.ipnext.buildsrc.fabricCommonAfterEvaluate
 import org.anti_ad.mc.ipnext.buildsrc.fabricCommonDependency
@@ -33,18 +34,19 @@ import org.anti_ad.mc.ipnext.buildsrc.loom_version
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import proguard.gradle.ProGuardTask
 
-val supported_minecraft_versions = listOf("1.19.2")
+val supported_minecraft_versions = mapOf(MODRINTH to listOf("1.20.6"),
+                                         CURSEFORGE to listOf("1.20.6"))
 val mod_loader = "fabric"
 val mod_version = project.version.toString()
-val minecraft_version = "1.19.2"
-val minecraft_version_string = "1.19.2"
-val mappings_version = "1.19.2+build.1"
-val loader_version = "0.15.7"
-val modmenu_version = "4.0.6"
-val fabric_api_version = "0.72.0+1.19.2"
+val minecraft_version = "1.20.6"
+val minecraft_version_string = "1.20.6"
+val mappings_version = "1.20.6+build.1"
+val loader_version = "0.15.11"
+val modmenu_version = "9.0.0-alpha.3"
+val fabric_api_version = "0.98.0+1.20.6"
 val mod_artefact_version = project.ext["mod_artefact_version"]
-val libIPN_version = "${project.name}:${project.ext["libIPN_version"]}"
-val carpet_core_version = "1.19.2-1.4.84+v221018"
+val libIPN_version = "${"fabric-1.20.5"}:${project.ext["libIPN_version"]}"
+val carpet_core_version = "1.20.3-pre2-1.4.127+v231122"
 
 buildscript {
     dependencies {
@@ -83,16 +85,22 @@ configureCommon()
 platformsCommonConfig()
 
 configure<JavaPluginExtension> {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
 
 repositories {
+
+/*
     maven {
         name = "Ladysnake Libs"
         url = uri("https://ladysnake.jfrog.io/artifactory/mods")
     }
-
+*/
+    maven {
+        name = "JourneyMap (Public)"
+        url = uri("https://jm.gserv.me/repository/maven-public/")
+    }
 }
 
 fabricCommonDependency(minecraft_version,
@@ -105,13 +113,25 @@ fabricCommonDependency(minecraft_version,
 
 dependencies {
     //modRuntimeOnly("dev.emi:trinkets:3.4.0")
-    //modRuntimeOnly("curse.maven:exordium-681953:4009906")
-    //modRuntimeOnly("curse.maven:scout-631922:4333756")
+    //modRuntimeOnly("curse.maven:scout-631922:3947029")
+    //"modCompileOnly"("com.terraformersmc:modmenu:$modmenu_version")
+    //modRuntimeOnly("curse.maven:minihud-244260:4160116")
+    //modRuntimeOnly("curse.maven:malilib-303119:4147598")
+    //modRuntimeOnly("curse.maven:athena-841890:4686261")
+    //modRuntimeOnly("curse.maven:resourcefullib-570073:4681832")
 
-    //modRuntimeOnly("curse.maven:cloth-config-348521:3972420")
-    //modRuntimeOnly("curse.maven:stacker-515415:3918819")
-    modRuntimeOnly("curse.maven:resourcefullib-570073:4378850")
-    modImplementation("curse.maven:chipped-456956:4463478")
+/*
+    modImplementation("curse.maven:journey-map-32274:4841229")
+    modImplementation("info.journeymap:journeymap-api-common:2.0.0-1.20.2-SNAPSHOT")
+    modImplementation("info.journeymap:journeymap-api:2.0+1.20-fabric-SNAPSHOT")
+*/
+
+/*    modImplementation("curse.maven:just-enough-professions-jep-417645:4768870")
+    modImplementation("curse.maven:jei-238222:4767570")*/
+
+    modCompileOnly("curse.maven:chipped-456956:4634858")
+
+
 }
 
 tasks.named("compileKotlin") {
@@ -129,7 +149,7 @@ tasks.withType<JavaCompile>().configureEach {
 plugins.withId("idea") {
     configure<org.gradle.plugins.ide.idea.model.IdeaModel> {
         afterEvaluate {
-            module.sourceDirs.add(file("src/shared/antlr"))
+            module.sourceDirs.add(file("../../shared-sources/src/main/antlr"))
             module.sourceDirs.add(file("build/generated-src/antlr/main"))
             //module.generatedSourceDirs.add(file("build/generated-src/antlr/main"))
         }
@@ -138,21 +158,19 @@ plugins.withId("idea") {
 
 loom {
     runConfigs["client"].ideConfigGenerated(true)
+    runConfigs["server"].ideConfigGenerated(true)
     runConfigs["client"].programArgs.addAll(listOf<String>("--width=1280", "--height=720", "--username=DEV"))
-
     runConfigs["server"].runDir = "runServer"
-
     mixin.defaultRefmapName.set("inventoryprofilesnext-refmap.json")
+
     accessWidenerPath.set(file("src/main/resources/ipnext.accesswidener"))
 }
 
 tasks.named<AntlrTask>("generateGrammarSource").configure {
     val pkg = "org.anti_ad.mc.common.gen"
     outputDirectory = file("build/generated-src/antlr/main/${pkg.replace('.', '/')}")
-    arguments = listOf(
-        "-visitor", "-package", pkg,
-        "-Xexact-output-dir"
-                      )
+    arguments = listOf("-visitor", "-package", pkg,
+                       "-Xexact-output-dir")
 }
 
 afterEvaluate {
@@ -165,7 +183,6 @@ afterEvaluate {
                 this.java.srcDirs(it.path + "/src/main/kotlin")
             }
         }
-        this.java.srcDirs("./src/integrations/kotlin")
     }
     project.sourceSets.getByName("main") {
         resources.srcDirs("src/shared/resources")
@@ -226,6 +243,7 @@ val proguard by tasks.registering(ProGuardTask::class) {
         val classpath = configurations.runtimeClasspath.get().files + configurations.compileClasspath.get().files
         libraryjars( classpath)
     }
+
     dependsOn(tasks["shadowJar"])
 }
 
@@ -347,22 +365,20 @@ configure<CurseExtension> {
         changelogType = "markdown"
         changelog = file("../../description/out/pandoc-release_notes.md")
         releaseType = "release"
-        supported_minecraft_versions.forEach {
-            if (!it.lowercase().contains("pre") && !it.lowercase().contains("shanpshot")) {
-                this.addGameVersion(it)
-            }
+        supported_minecraft_versions[CURSEFORGE]!!.forEach {
+            this.addGameVersion(it)
         }
         this.addGameVersion("Fabric")
         this.addGameVersion("Quilt")
         val fabricRemapJar = tasks.named<org.gradle.jvm.tasks.Jar>("remapJar").get()
         val remappedJarFile = fabricRemapJar.archiveFile.get().asFile
         logger.lifecycle("""
-            +*************************************************+
-            Will release ${remappedJarFile.path}
-            +*************************************************+
-        """.trimIndent())
+        +*************************************************+
+        Will release ${remappedJarFile.path}
+        +*************************************************+
+    """.trimIndent())
         mainArtifact(remappedJarFile, closureOf<com.matthewprenger.cursegradle.CurseArtifact> {
-            displayName = "IPN-$mod_version [fabric-$minecraft_version_string]"
+            displayName = "Inventory Profiles Next-fabric-$minecraft_version_string-$mod_version"
         })
 
         relations(closureOf<com.matthewprenger.cursegradle.CurseRelation> {
@@ -395,14 +411,12 @@ modrinth {
     val fabricRemapJar = tasks.named<org.gradle.jvm.tasks.Jar>("remapJar").get()
     val remappedJarFile = fabricRemapJar.archiveFile
     uploadFile.set(remappedJarFile as Any) // This is the java jar task. If it can't find the jar, try 'jar.outputs.getFiles().asPath' in place of 'jar'
-    gameVersions.addAll(supported_minecraft_versions.filter {
-        !it.lowercase().contains("snapshot")
-    })
+    gameVersions.addAll(supported_minecraft_versions[MODRINTH]!!)
     logger.lifecycle("""
-        +*************************************************+
-        Will release ${remappedJarFile.get().asFile.path}
-        +*************************************************+
-    """.trimIndent())
+    +*************************************************+
+    Will release ${remappedJarFile.get().asFile.path}
+    +*************************************************+
+""".trimIndent())
     versionName.set("IPN $mod_version for $mod_loader $minecraft_version_string")
     this.changelog.set(project.rootDir.resolve("description/release_notes.md").readText())
     loaders.add(mod_loader)
@@ -413,6 +427,4 @@ modrinth {
             ModDependency("Ha28R6CL", "required"),
             ModDependency("onSQdWhM", "required"),
             ModDependency("mOgUt4GM", "optional")))
-
-    this.versionType.set(masecla.modrinth4j.model.version.ProjectVersion.VersionType.RELEASE.name)
 }

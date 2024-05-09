@@ -390,7 +390,7 @@ modrinth {
         +*************************************************+
     """.trimIndent())
     versionName.set("IPN $mod_version for $mod_loader $minecraft_version_string")
-    this.changelog.set(project.rootDir.resolve("description/out/pandoc-release_notes.md").readText())
+    this.changelog.set(project.rootDir.resolve("description/release_notes.md").readText())
     loaders.add(mod_loader)
     loaders.add("quilt")
     dependencies.set(
