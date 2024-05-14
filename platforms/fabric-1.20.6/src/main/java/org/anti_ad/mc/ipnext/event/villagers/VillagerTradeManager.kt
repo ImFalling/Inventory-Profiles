@@ -217,8 +217,7 @@ object VillagerTradeManager: IInputHandler {
     fun List<VillagerTradeData>.has(offer: TradeOffer): Boolean {
         val cost1 = offer.`(originalFirstBuyItem)`.`(itemType)`
         val second = offer.`(secondBuyItem)`
-        val sec = second.get().itemStack
-        val cost2 = sec.`(itemType)`
+        val cost2 = if (second.isEmpty) null else second.get().itemStack.`(itemType)`
         val buy = offer.`(sellItem)`.`(itemType)`
 
         this.forEach { data ->
@@ -411,8 +410,8 @@ object VillagerTradeManager: IInputHandler {
                        group: Int) {
         val trade = screen.`(recipes)`[index]
         val tr1 = trade.`(originalFirstBuyItem)`.`(itemType)`.itemId
-        val intermediate = trade.`(secondBuyItem)`.get().itemStack.`(itemType)`
-        val tr2 = intermediate.itemId.nullIfAir()
+        val second = trade.`(secondBuyItem)`
+        val tr2 = if (second.isEmpty) null else second.get().itemStack.`(itemType)`.itemId
         val sellItem = trade.`(sellItem)`.`(itemType)`
         val sellId = sellItem.identifier.toString()
         val sellNbt = sellItem.tag.nullIfEmpty()
