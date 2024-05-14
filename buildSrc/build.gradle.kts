@@ -36,12 +36,17 @@ dependencies {
     implementation(kotlin("stdlib"))
     implementation(kotlin("reflect"))
 }
+
+kotlin {
+    jvmToolchain(21)
+}
+
 val compileKotlin: KotlinCompile by tasks
 compileKotlin.kotlinOptions {
-    jvmTarget = "17"
+    jvmTarget = "21"
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }

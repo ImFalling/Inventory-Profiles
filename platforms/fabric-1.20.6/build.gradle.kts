@@ -42,11 +42,11 @@ val minecraft_version = "1.20.6"
 val minecraft_version_string = "1.20.6"
 val mappings_version = "1.20.6+build.1"
 val loader_version = "0.15.11"
-val modmenu_version = "9.0.0-alpha.3"
+val modmenu_version = "10.0.0-beta.1"
 val fabric_api_version = "0.98.0+1.20.6"
 val mod_artefact_version = project.ext["mod_artefact_version"]
 val libIPN_version = "${"fabric-1.20.5"}:${project.ext["libIPN_version"]}"
-val carpet_core_version = "1.20.3-pre2-1.4.127+v231122"
+val carpet_core_version = "1.20.6-1.4.141+v240429"
 
 buildscript {
     dependencies {
@@ -108,8 +108,8 @@ fabricCommonDependency(minecraft_version,
                        loader_version,
                        fabric_api_version,
                        modmenu_version = modmenu_version,
-                       libIPN_version = libIPN_version,
-                       carpet_version = carpet_core_version)
+                       libIPN_version = libIPN_version)
+                       //carpet_version = carpet_core_version)
 
 dependencies {
     //modRuntimeOnly("dev.emi:trinkets:3.4.0")
@@ -144,12 +144,13 @@ tasks.named("compileJava") {
 
 tasks.withType<JavaCompile>().configureEach {
     dependsOn("generateGrammarSource")
+
 }
 
 plugins.withId("idea") {
     configure<org.gradle.plugins.ide.idea.model.IdeaModel> {
         afterEvaluate {
-            module.sourceDirs.add(file("../../shared-sources/src/main/antlr"))
+            module.sourceDirs.add(file("../../shared-sources/main/src"))
             module.sourceDirs.add(file("build/generated-src/antlr/main"))
             //module.generatedSourceDirs.add(file("build/generated-src/antlr/main"))
         }
@@ -223,7 +224,7 @@ tasks.named<ShadowJar>("shadowJar") {
     //exclude("META-INF/LICENSE")
     //exclude("META-INF/README")
 
-    minimize()
+    //minimize()
 }
 
 val proguard by tasks.registering(ProGuardTask::class) {

@@ -84,10 +84,10 @@ fun Project.configureDependencies() {
             }
         }
 
-        maven {
+        /*maven {
             url = uri("https://masa.dy.fi/maven")
             name = "carpet"
-        }
+        }*/
     }
 
     dependencies {
@@ -113,8 +113,8 @@ fun Project.fabricCommonDependency(minecraft_version: Any,
                                    loader_version: Any,
                                    fabric_api_version: Any,
                                    libIPN_version: Any? = null,
-                                   modmenu_version: Any? = null,
-                                   carpet_version: Any? = null) {
+                                   modmenu_version: Any? = null) {
+                                   //carpet_version: Any? = null) {
 
     configurations.all {
         resolutionStrategy {
@@ -145,9 +145,9 @@ fun Project.fabricCommonDependency(minecraft_version: Any,
                 this.isChanging = true
             }
         }
-        carpet_version?.let {
+        /*carpet_version?.let {
             "modImplementation"("carpet:fabric-carpet:$carpet_version")
-        }
+        }*/
 
         "modRuntimeOnly"("net.fabricmc:fabric-language-kotlin:1.10.17+kotlin.1.9.22")
     }
@@ -218,9 +218,9 @@ fun Project.forgeCommonDependency(minecraft_version: Any,
         }
 
         "minecraft"("net.minecraftforge:forge:$minecraft_version-$loader_version")
-        "api"("org.spongepowered:mixin:0.8.3-SNAPSHOT")
-        "annotationProcessor"("org.spongepowered:mixin:0.8.3-SNAPSHOT:processor")
-        "testAnnotationProcessor"("org.spongepowered:mixin:0.8.3-SNAPSHOT:processor")
+        "api"("org.spongepowered:mixin:0.8.6")
+        "annotationProcessor"("org.spongepowered:mixin:0.8.6:processor")
+        "testAnnotationProcessor"("org.spongepowered:mixin:0.8.6:processor")
         "implementation"("thedarkcolour:kotlinforforge:$kotlin_for_forge_version") {
             this.isChanging = true
         }

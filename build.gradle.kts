@@ -100,7 +100,7 @@ allprojects {
     tasks.withType<KotlinCompile>().configureEach {
         kotlinOptions {
             languageVersion = "1.8"
-            jvmTarget = "17"
+            jvmTarget = "21"
             freeCompilerArgs = mutableListOf("-opt-in=kotlin.ExperimentalStdlibApi", "-opt-in=kotlin.RequiresOptIn") + freeCompilerArgs
         }
         this.incremental = true

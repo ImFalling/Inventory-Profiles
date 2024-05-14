@@ -34,8 +34,8 @@ public class MixinInGameHud {
 
     @Inject(at = @At("HEAD"),
             method = "renderHotbar")
-    protected void preRenderHotbar(float tickDelta,
-                                   DrawContext drawContext,
+    protected void preRenderHotbar(DrawContext drawContext,
+                                   float tickDelta,
                                    CallbackInfo ci) {
         LockSlotsHandler.INSTANCE.preRenderHud(new NativeContext(drawContext));
     }
@@ -43,8 +43,8 @@ public class MixinInGameHud {
 
     @Inject(at = @At("TAIL"),
             method = "renderHotbar")
-    protected void postRenderHotbar(float tickDelta,
-                                    DrawContext drawContext,
+    protected void postRenderHotbar(DrawContext drawContext,
+                                    float tickDelta,
                                     CallbackInfo ci) {
         LockSlotsHandler.INSTANCE.postRenderHud(new NativeContext(drawContext));
 

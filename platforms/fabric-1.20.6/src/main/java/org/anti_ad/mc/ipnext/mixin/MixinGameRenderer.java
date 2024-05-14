@@ -23,15 +23,17 @@ package org.anti_ad.mc.ipnext.mixin;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.util.Window;
-import net.minecraft.client.util.math.MatrixStack;
+//import net.minecraft.client.util.math.MatrixStack;
 import org.anti_ad.mc.common.gui.NativeContext;
 import org.anti_ad.mc.ipnext.gui.inject.ScreenEventHandler;
 import org.joml.Matrix4f;
+import org.joml.Matrix4fStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
+
 
 /**
  * MixinGameRenderer
@@ -43,14 +45,17 @@ public class MixinGameRenderer {
     @Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/Screen;renderWithTooltip(Lnet/minecraft/client/gui/DrawContext;IIF)V"),
             method = "render",
             locals = LocalCapture.CAPTURE_FAILHARD)
-    public void preScreenRender(float tickDelta, long startTime, boolean tick, CallbackInfo ci,
+    public void preScreenRender(float tickDelta,
+                                long startTime,
+                                boolean tick,
+                                CallbackInfo ci,
                                 float f,
                                 boolean bl,
                                 int i,
                                 int j,
                                 Window window,
                                 Matrix4f matrix4f,
-                                MatrixStack matrixStack,
+                                Matrix4fStack matrixStack,
                                 DrawContext drawContext) {
         ScreenEventHandler.INSTANCE.preRender(new NativeContext(drawContext));
     }
@@ -64,7 +69,7 @@ public class MixinGameRenderer {
                                  int j,
                                  Window window,
                                  Matrix4f matrix4f,
-                                 MatrixStack matrixStack,
+                                 Matrix4fStack matrixStack,
                                  DrawContext drawContext) {
         ScreenEventHandler.INSTANCE.postRender(new NativeContext(drawContext));
     }

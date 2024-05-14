@@ -22,24 +22,20 @@
 
 package org.anti_ad.mc.ipnext.item
 
+import it.unimi.dsi.fastutil.objects.Object2IntFunction
+import it.unimi.dsi.fastutil.objects.Object2IntMap
 import net.minecraft.block.ShulkerBoxBlock
+import net.minecraft.enchantment.Enchantment
 import net.minecraft.entity.effect.StatusEffectCategory
 import net.minecraft.item.BlockItem
+import net.minecraft.nbt.NbtCompound
+import net.minecraft.potion.Potion
+import net.minecraft.registry.entry.RegistryEntry
 import net.minecraft.text.TranslatableTextContent
 import org.anti_ad.mc.ipnext.Log
 import org.anti_ad.mc.common.extensions.ifTrue
 import org.anti_ad.mc.common.vanilla.Vanilla
-import org.anti_ad.mc.common.vanilla.alias.Enchantment
-import org.anti_ad.mc.common.vanilla.alias.EnchantmentHelper
-import org.anti_ad.mc.common.vanilla.alias.FoodComponent
-import org.anti_ad.mc.common.vanilla.alias.Identifier
-import org.anti_ad.mc.common.vanilla.alias.ItemGroup
-import org.anti_ad.mc.common.vanilla.alias.ItemGroupType
-import org.anti_ad.mc.common.vanilla.alias.ItemGroups
-import org.anti_ad.mc.common.vanilla.alias.Items
-import org.anti_ad.mc.common.vanilla.alias.PotionUtil
-import org.anti_ad.mc.common.vanilla.alias.Registries
-import org.anti_ad.mc.common.vanilla.alias.StatusEffectInstance
+import org.anti_ad.mc.common.vanilla.alias.*
 import org.anti_ad.mc.common.vanilla.alias.glue.I18n
 import org.anti_ad.mc.common.vanilla.alias.items.BucketItem
 import org.anti_ad.mc.common.vanilla.alias.items.MilkBucketItem
@@ -53,6 +49,7 @@ import org.anti_ad.mc.ipnext.ingame.`(asString)`
 import org.anti_ad.mc.ipnext.ingame.`(getIdentifier)`
 import org.anti_ad.mc.ipnext.ingame.`(getRawId)`
 import org.anti_ad.mc.ipnext.ingame.`(itemType)`
+import org.anti_ad.mc.ipnext.item.rule.parameter.nbt
 import org.anti_ad.mc.ipnext.mixin.IMixinBucketItem
 import org.anti_ad.mc.ipnext.mixin.IMixinEntityBucketItem
 import org.anti_ad.mc.ipnext.mixin.IMixinFluid
@@ -112,11 +109,18 @@ inline val ItemType.searchItemStack: VanillaItemStack
     }
 
 inline val ItemType.vanillaStack: VanillaItemStack
-    get() = VanillaItemStack(this.item).apply { nbt = this@vanillaStack.tag } // nbt was tag
+    get() = VanillaItemStack(this.item).apply{
+
+
+    } // nbt was tag
 
 fun ItemType.vanillaStackWithCount(count: Int): VanillaItemStack =
     VanillaItemStack(this.item,
-                     count).apply { nbt = this@vanillaStackWithCount.tag } // nbt was tag
+                     count).apply{
+                         NbtComponent.set(DataComponentTypes.CUSTOM_DATA, this,
+                             this.get(DataComponentTypes.CUSTOM_DATA)?.copyNbt() ?: NbtCompound()
+                         )
+    }// nbt was tag
 
 inline val ItemType.identifier: Identifier
     get() = Registries.ITEM.`(getIdentifier)`(item)
@@ -130,7 +134,7 @@ inline val ItemType.itemClass
 //region ItemType String Relative
 
 inline val ItemType.hasCustomName: Boolean
-    get() = vanillaStack.hasCustomName()
+    get() = vanillaStack.components.contains(DataComponentTypes.CUSTOM_NAME)
 inline val ItemType.customName: String
     get() = if (hasCustomName) displayName else ""
 inline val ItemType.displayName: String
@@ -271,16 +275,16 @@ val ItemType.groupIndex: Int
     }
 
 inline val ItemType.`(foodComponent)`: FoodComponent
-    get() = item.foodComponent ?: error("this shouldn't happen")
+    get() = error("this shouldn't happen")
 
 inline val ItemType.`(isFood)`: Boolean
-    get() = item.isFood
+    get() = item.components.contains(DataComponentTypes.FOOD)
 
 
 inline val FoodComponent.`(statusEffects)`: List<Pair<StatusEffectInstance, Float>>
     get() = mutableListOf<Pair<StatusEffectInstance, Float>>().also { ls ->
-        this.statusEffects.forEach {
-            ls.add(Pair(it.first, it.second))
+        this.effects.forEach {
+            ls.add(Pair(it.effect, it.probability))
         }
     }
 
@@ -289,7 +293,7 @@ inline val FoodComponent.`(isHarmful)`: Boolean
         var res = false
         run fastEnd@ {
             this.`(statusEffects)`.forEach {
-                if (it.first.effectType.category == StatusEffectCategory.HARMFUL) {
+                if (it.first.effectType.value().category == StatusEffectCategory.HARMFUL) {
                     res = true
                     return@fastEnd
                 }
@@ -300,7 +304,7 @@ inline val FoodComponent.`(isHarmful)`: Boolean
 
     }
 inline val FoodComponent.`(saturationModifier)`
-    get() = this.saturationModifier
+    get() = this.saturation
 
 
 inline val ItemType.rawId: Int
@@ -308,12 +312,12 @@ inline val ItemType.rawId: Int
 inline val ItemType.damage: Int
     get() = vanillaStack.damage
 inline val ItemType.enchantmentsScore: Double
-    get() = EnchantmentHelper.get(vanillaStack).toList().fold(0.0) { acc, (enchantment, level) ->
-        acc + if (enchantment.isCursed) -0.001 else level.toDouble() / enchantment.maxLevel
+    get() = EnchantmentHelper.getEnchantments(vanillaStack).enchantmentsMap.toList().fold(0.0) { acc, (enchantment, level) ->
+        acc + if (enchantment.value().isCursed) -0.001 else level.toDouble() / enchantment.value().maxLevel
     } // cursed enchantments +0 scores
 
-inline val ItemType.enchantments: MutableMap<Enchantment, Int>
-    get() = EnchantmentHelper.get(vanillaStack)
+inline val ItemType.enchantments: MutableSet<Object2IntMap.Entry<RegistryEntry<Enchantment>>>?
+    get() = EnchantmentHelper.getEnchantments(vanillaStack).enchantmentsMap
 
 inline val ItemType.isDamageable: Boolean
     get() = vanillaStack.isDamageable
@@ -369,19 +373,19 @@ inline val ItemType.hasPotionName: Boolean
     get() = tag?.contains("Potion",
                           8) ?: false
 inline val ItemType.potionName: String
-    get() = if (hasPotionName) PotionUtil.getPotion(tag).finishTranslationKey("") else ""
+    get() = if (this.hasPotionName) Potion.finishTranslationKey(item.components.get(DataComponentTypes.POTION_CONTENTS)?.potion, "") else ""
 inline val ItemType.hasPotionEffects: Boolean
-    get() = PotionUtil.getPotionEffects(tag).isNotEmpty()
+    get() = item.components.get(DataComponentTypes.POTION_CONTENTS)?.hasEffects() == true
 inline val ItemType.hasCustomPotionEffects: Boolean
-    get() = PotionUtil.getCustomPotionEffects(tag).isNotEmpty()
+    get() = item.components.get(DataComponentTypes.POTION_CONTENTS)?.customEffects?.isEmpty() == false
 inline val ItemType.potionEffects: List<StatusEffectInstance>
-    get() = PotionUtil.getPotionEffects(tag)
+    get() = item.components.get(DataComponentTypes.POTION_CONTENTS)?.effects!!.toList()
 inline val ItemType.comparablePotionEffects: List<PotionEffect>
     get() = potionEffects.map { it.`(asComparable)` }
 
 @Suppress("ObjectPropertyName")
 inline val StatusEffectInstance.`(asComparable)`: PotionEffect
-    get() = PotionEffect(Registries.STATUS_EFFECT.getId(this.effectType).toString(),
+    get() = PotionEffect(Registries.STATUS_EFFECT.getId(this.effectType.value()).toString(),
                          this.amplifier,
                          this.duration)
 
